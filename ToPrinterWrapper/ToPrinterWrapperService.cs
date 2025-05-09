@@ -1,0 +1,62 @@
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+
+namespace ToPrinterWrapper
+{
+    /// <summary>
+    /// Hosted service for managing ToPrinter lifecycle and dependency injection in ASP.NET Core.
+    /// </summary>
+    public class ToPrinterWrapperService : IHostedService, IAsyncDisposable
+    {
+        private readonly ToPrinter _printer;
+        /// <summary>
+        /// Gets the ToPrinter instance used by this service.
+        /// </summary>
+        public ToPrinter Printer => _printer;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ToPrinterWrapperService"/> class with the specified options.
+        /// </summary>
+        /// <param name="options">The options for configuring the ToPrinter instance.</param>
+        public ToPrinterWrapperService(IOptions<ToPrinterOptions> options)
+        {
+            _printer = new ToPrinter(options.Value.PrintPath, options.Value.MaxConcurrentPrintingJobs);
+        }
+
+        /// <summary>
+        /// Starts the hosted service. No-op for ToPrinter.
+        /// </summary>
+        public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+        /// <summary>
+        /// Stops the hosted service and gracefully shuts down the ToPrinter instance.
+        /// </summary>
+        public async Task StopAsync(CancellationToken cancellationToken)
+        {
+            await _printer.ShutdownAsync();
+        }
+
+        /// <summary>
+        /// Disposes the ToPrinter instance asynchronously.
+        /// </summary>
+        public ValueTask DisposeAsync()
+        {
+            return new ValueTask(_printer.ShutdownAsync());
+        }
+    }
+
+    /// <summary>
+    /// Options for configuring the ToPrinter instance.
+    /// </summary>
+    public class ToPrinterOptions
+    {
+        /// <summary>
+        /// Gets or sets the directory path for print temp files.
+        /// </summary>
+        public string PrintPath { get; set; } = @"C:\ToPrinter\";
+        /// <summary>
+        /// Gets or sets the maximum number of concurrent printing jobs.
+        /// </summary>
+        public int MaxConcurrentPrintingJobs { get; set; } = 10;
+    }
+}
