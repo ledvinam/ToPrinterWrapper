@@ -9,19 +9,34 @@ namespace ToPrinterWrapper
     /// </summary>
     public class ToPrinter
     {
+        #region Public Properties
+        
+        /// <summary>
+        /// Print path for temporary files.
+        /// </summary>
         public string PrintPath { get; } = @"C:\ToPrinter\";
+
+        /// <summary>
+        /// Maximum number of concurrent printing jobs.
+        /// </summary>
         public int MaxConcurrentPrintingJobs { get; } = 10;
 
-        private const string ToPrinterCommand = "2Printer.exe";
+        /// <summary>
+        /// Command-line executable for 2Printer.
+        /// </summary>
+        public const string ToPrinterCommand = "2Printer.exe";
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to log output and errors to the console.
+        /// </summary>
+        public bool Log { get; set; } = true;
+
+        #endregion
 
         private readonly SemaphoreSlim _concurrentPrintingSemaphore;       
         private readonly CancellationTokenSource _shutdownCts = new();
         private bool _shutdown = false;
         private static readonly FileDeleteQueue _fileDeleteQueue = new();
-        /// <summary>
-        /// Gets or sets a value indicating whether to log output and errors to the console.
-        /// </summary>
-        public bool Log { get; set; } = true;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ToPrinter"/> class.
