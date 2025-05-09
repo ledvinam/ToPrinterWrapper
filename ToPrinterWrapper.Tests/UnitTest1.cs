@@ -4,15 +4,16 @@ namespace ToPrinterWrapper.Tests
 {
     public class ToPrinterTests
     {
+        private const string PrintPath = @"R:\";
         private const string TestFilePath = "test.pdf";
-        private const string TestPrinterName = "Bullzip PDF Printer";    
-        private const string TestOuputFilePath = @"C:\ToPrinter\test.pdf"; 
-       
+        private const string TestPrinterName = "Bullzip PdDF Printer";    
+        private const string TestOuputFilePath = @"R:\test_printed.pdf"; 
+
         [Fact]
         public async Task PrintDocumentAsync_ValidOptions_ShouldReturnExitCodeZero()
         {
             // Arrange
-            var printer = new ToPrinter();
+            var printer = new ToPrinter(PrintPath);
             var printOptions = new PrintOptions
             {
                 Copies = 1,
@@ -39,7 +40,7 @@ namespace ToPrinterWrapper.Tests
         public async Task PrintDocumentAsync_Stream_ValidOptions_ShouldReturnExitCodeZero()
         {
             // Arrange
-            var printer = new ToPrinter();
+            var printer = new ToPrinter(PrintPath);
             var printOptions = new PrintOptions
             {
                 Copies = 1,
@@ -65,12 +66,10 @@ namespace ToPrinterWrapper.Tests
         }
 
         [Fact]
-        public async Task PrintDocumentAsync_Concurrent_ShouldNotExceedMaxConcurrency()
+        public async Task PrintDocumentAsync_Concurrent1_ShouldNotExceedMaxConcurrency()
         {
             // Arrange
-            int concurrentJobs = 20;
-            var printer = new ToPrinter();
-            printer.SetMaxConcurrentPrintingJobs(5); // For test, set to 5
+            var printer = new ToPrinter(PrintPath, 20);
             var printOptions = new PrintOptions
             {
                 Copies = 1,
@@ -82,7 +81,32 @@ namespace ToPrinterWrapper.Tests
             var tasks = new List<Task<int>>();
 
             // Act
-            for (int i = 0; i < concurrentJobs; i++)
+            for (int i = 0; i < 20; i++)
+            {
+                var fileStream = File.OpenRead(TestFilePath);
+                tasks.Add(printer.PrintDocumentAsync(fileStream, TestPrinterName, printOptions));
+            }
+
+            await Task.WhenAll(tasks);
+        }
+
+         [Fact]
+        public async Task PrintDocumentAsync_Concurrent2_ShouldNotExceedMaxConcurrency()
+        {
+            // Arrange
+            var printer = new ToPrinter(PrintPath, 20);
+            var printOptions = new PrintOptions
+            {
+                Copies = 1,
+                Duplex = DuplexMode.Simplex,
+                Color = ColorMode.Color,
+                Orientation = Orientation.Portrait,
+                PaperSize = PageSize.A4
+            };
+            var tasks = new List<Task<int>>();
+
+            // Act
+            for (int i = 0; i < 20; i++)
             {
                 tasks.Add(printer.PrintDocumentAsync("test.pdf", "Microsoft Print to PDF", printOptions));
             }

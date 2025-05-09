@@ -27,7 +27,7 @@ services.Configure<ToPrinterOptions>(config =>
     config.PrintPath = @"C:\\ToPrinter\\";
     config.MaxConcurrentPrintingJobs = 5;
 });
-services.AddHostedService<ToPrinterWrapperService>();
+services.AddSingleton<ToPrinterWrapperService>();
 ```
 
 ### Using ToPrinter in Your Code
