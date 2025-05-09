@@ -71,6 +71,20 @@ var options = new PrintOptions
 };
 ```
 
+## Using ToPrinterWrapper Without ASP.NET Core or Dependency Injection
+
+You can use the `ToPrinter` class directly in any .NET application, without ASP.NET Core or dependency injection. Simply create an instance and call its async methods:
+
+```csharp
+var printer = new ToPrinter();
+var options = new PrintOptions { Copies = 1 };
+int exitCode = await printer.PrintDocumentAsync("file.pdf", "Bullzip PDF Printer", options);
+```
+
+This approach is suitable for console apps, WinForms, WPF, or any .NET project where you don't need DI or hosted services.
+
+---
+
 ## Speeding Up Temporary File Operations with a RAM Disk
 
 For even faster print jobs and to reduce SSD wear, you can use a RAM disk for temporary files. This is especially useful when printing from streams, as the library writes the stream to a temporary file before printing.
@@ -100,6 +114,38 @@ You can make the RAM disk path configurable in your application for flexibility.
 - Much faster read/write speeds for temp files
 - No SSD wear from temp file operations
 - RAM disk contents are cleared on reboot
+
+## Automating RAM Disk Mounting at Startup (Windows)
+
+To ensure the RAM disk is always available (e.g., after reboot), you can automate mounting using the provided scripts and Windows Task Scheduler:
+
+1. **Scripts Provided:**
+   - `cmd/mount-ramdisk.cmd` — Mounts the RAM disk (R:) using OSFMount.
+   - `cmd/unmount-ramdisk.cmd` — Unmounts the RAM disk (R:).
+   - `cmd/install-mount-ramdisk-task.cmd` — Installs a Task Scheduler task to run `mount-ramdisk.cmd` at startup with admin rights.
+   - `cmd/uninstall-mount-ramdisk-task.cmd` — Removes the scheduled task.
+
+2. **How to Install the Startup Task:**
+   - Open a terminal as Administrator.
+   - Run:
+     ```powershell
+     cd <path-to-ToPrinterWrapper\cmd>
+     .\install-mount-ramdisk-task.cmd
+     ```
+   - This will create a Task Scheduler entry named `MountRAMDisk` that runs at system startup with highest privileges.
+
+3. **How to Uninstall the Startup Task:**
+   - Open a terminal as Administrator.
+   - Run:
+     ```powershell
+     cd <path-to-ToPrinterWrapper\cmd>
+     .\uninstall-mount-ramdisk-task.cmd
+     ```
+
+**Notes:**
+- The scripts must remain in their original folder, or you must update the scheduled task if you move them.
+- The scheduled task uses an absolute path to ensure it works for all users.
+- You can still run `mount-ramdisk.cmd` or `unmount-ramdisk.cmd` manually if needed.
 
 ## Concurrency Testing
 - The library can be tested for concurrency by launching multiple print jobs in parallel and verifying the maximum concurrency does not exceed the configured limit.
