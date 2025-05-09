@@ -10,9 +10,9 @@
     <Company>Foriero s.r.o.</Company>
     <Description>Automated printing wrapper for 2Printer and PDF printers with async, concurrency, and ASP.NET support.</Description>
     <PackageTags>printing;2Printer;pdf;aspnet;automation</PackageTags>
-    <RepositoryUrl>https://github.com/your/repo</RepositoryUrl>
+    <RepositoryUrl>https://github.com/ledvinam/ToPrinterWrapper</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/your/repo</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/ledvinam/ToPrinterWrapper</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
