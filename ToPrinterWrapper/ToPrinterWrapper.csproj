@@ -13,6 +13,7 @@
     <RepositoryUrl>https://github.com/ledvinam/ToPrinterWrapper</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/ledvinam/ToPrinterWrapper</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
