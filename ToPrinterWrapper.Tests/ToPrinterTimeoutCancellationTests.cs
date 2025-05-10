@@ -1,10 +1,3 @@
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
-
 namespace ToPrinterWrapper.Tests
 {
     public class ToPrinterTimeoutCancellationTests

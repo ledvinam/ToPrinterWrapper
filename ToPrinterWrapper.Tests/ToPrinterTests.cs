@@ -1,8 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Primitives;
-
-[assembly: Xunit.CollectionBehavior(DisableTestParallelization = true)]
+﻿[assembly: Xunit.CollectionBehavior(DisableTestParallelization = true)]
 namespace ToPrinterWrapper.Tests
 {
     public static class Tests{
