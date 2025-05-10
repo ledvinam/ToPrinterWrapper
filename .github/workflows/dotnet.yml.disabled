@@ -1,3 +1,5 @@
+# This workflow is currently disabled by renaming the file.
+# To re-enable, rename back to dotnet.yml
 name: .NET Build, Test, and Pack
 
 on:
