@@ -147,6 +147,27 @@ To ensure the RAM disk is always available (e.g., after reboot), you can automat
 - The scheduled task uses an absolute path to ensure it works for all users.
 - You can still run `mount-ramdisk.cmd` or `unmount-ramdisk.cmd` manually if needed.
 
+## Memory Pressure Handling
+
+ToPrinterWrapper includes a system-wide memory pressure safeguard:
+
+- **Automatic Throttling:** If system memory usage exceeds a configurable threshold (default: 90% of physical RAM), new print jobs will wait until memory pressure is relieved before starting.
+- **No Exceptions or Errors:** Threads are not rejected or failed due to memory pressure—they simply wait and retry until enough memory is available.
+- **Configuration:**
+    - `MaxSystemMemoryUsageRatio` (default: `0.9`) — The maximum allowed ratio of used system memory (e.g., `0.9` = 90%).
+    - `MemoryPressurePollIntervalMs` (default: `1000`) — How often (in milliseconds) to check for memory pressure relief while waiting.
+- **Platform:** This feature uses native Windows APIs and is only available on Windows.
+
+**Example:**
+```csharp
+var printer = new ToPrinter { MaxSystemMemoryUsageRatio = 0.85, MemoryPressurePollIntervalMs = 2000 };
+// If system memory usage is above 85%, new print jobs will wait and poll every 2 seconds.
+```
+
+This helps prevent system overload and ensures print jobs do not start when the system is under heavy memory pressure.
+
+---
+
 ## Concurrency Testing
 - The library can be tested for concurrency by launching multiple print jobs in parallel and verifying the maximum concurrency does not exceed the configured limit.
 
