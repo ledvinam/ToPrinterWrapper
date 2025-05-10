@@ -11,6 +11,7 @@ namespace ToPrinterWrapper.Tests
         public const string PrintPath = @"R:\";
         public const string TestFilePath = "test.pdf";
         public const string TestPrinterName = "Bullzip PDF Printer";   
+        public const string TestNetworkPrinterName = @"\\Z2MINI\Bullzip PDF Printer";        
         public const string PrintMask = "test_printed_*.pdf"; 
 
         public static async Task CleanUpAsync()

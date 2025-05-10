@@ -31,6 +31,11 @@ namespace ToPrinterWrapper
         /// </summary>
         public bool Log { get; set; } = true;
 
+        /// <summary>
+        /// Gets or sets a value indicating whether to write output and errors to the console.
+        /// </summary>
+        public bool Silent { get; set; } = true;
+
         #endregion
 
         private readonly SemaphoreSlim _concurrentPrintingSemaphore;       
@@ -98,48 +103,38 @@ namespace ToPrinterWrapper
                 {
                     FileName = ToPrinterCommand,
                     Arguments = arguments,
+                    UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
-                    UseShellExecute = false,
                     CreateNoWindow = true,
                 };
 
-                var outputBuilder = new StringBuilder();
-                var errorBuilder = new StringBuilder();
-                using (var process = new Process { StartInfo = processStartInfo, EnableRaisingEvents = false })
-                {
-                    process.OutputDataReceived += (sender, e) =>
-                    {
-                        if (e.Data != null)
-                        {
-                            outputBuilder.AppendLine(e.Data);
-                            if (Log) Console.WriteLine($"Output: {e.Data}");
-                        }
-                    };
-                    
-                    process.ErrorDataReceived += (sender, e) =>
-                    {
-                        if (e.Data != null)
-                        {
-                            errorBuilder.AppendLine(e.Data);
-                            if (Log) Console.WriteLine($"Error: {e.Data}");
-                        }
-                    };
-                    
-                    process.Start();
-                    
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
-                    
-                    using (linkedCts.Token.Register(() => { try { if (!process.HasExited) process.Kill(); } catch { } }))
-                    {
-                        await process.WaitForExitAsync(linkedCts.Token);
-                    }
+                using var process = new Process { StartInfo = processStartInfo, EnableRaisingEvents = false };
 
-                    if (Log) Console.WriteLine($"ExitCode : {process.ExitCode} - {process.ExitCode.ToDescription()}");
-                    
-                    return process.ExitCode;
+                process.Start();
+
+                using (linkedCts.Token.Register(() => { try { if (!process.HasExited) process.Kill(); } catch { } }))
+                {
+                    await process.WaitForExitAsync(linkedCts.Token);
                 }
+
+                if (Log)
+                {
+                    var output = "";
+                    var error = "";
+#if NET6_0
+                    output = await process.StandardOutput.ReadToEndAsync();
+                    error = await process.StandardError.ReadToEndAsync();
+#else
+                    output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
+                    error = await process.StandardError.ReadToEndAsync(cancellationToken);
+#endif
+                    Console.WriteLine($"Output: {await process.StandardOutput.ReadToEndAsync()}");
+                    Console.WriteLine($"Error: {await process.StandardError.ReadToEndAsync()}");
+                    Console.WriteLine($"ExitCode : {process.ExitCode} - {process.ExitCode.ToDescription()}");
+                }
+
+                return process.ExitCode;
             }
             finally
             {
@@ -157,7 +152,7 @@ namespace ToPrinterWrapper
         /// <returns>The exit code from 2Printer.</returns>
         public async Task<int> PrintDocumentAsync(string fileName, string printerName, PrintOptions printOptions, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
-            string arguments = $"-src \"{fileName}\" -prn \"{printerName}\" -options alerts:no silent:yes log:no -props spjob:yes {printOptions.BuildArguments()}";
+            string arguments = $"-src \"{fileName}\" -prn \"{printerName}\" -options alerts:no silent:{(Silent ? "yes" : "no")} log:no -props spjob:yes {printOptions.BuildArguments()}";
             if (Log) Console.WriteLine($"Executing: {ToPrinterCommand} {arguments}");
 
             var delete = printOptions.DeleteFile;
@@ -200,17 +195,30 @@ namespace ToPrinterWrapper
             var processStartInfo = new ProcessStartInfo
             {
                 FileName = ToPrinterCommand,
-                Arguments = $"-prn \"{printerName}\" -options getprinterstatus:yes alerts:no silent:yes log:no",
+                Arguments = $"-prn \"{printerName}\" -options getprinterstatus:yes alerts:no silent:no log:no",
                 UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 CreateNoWindow = true
             };
-            using (var process = new Process { StartInfo = processStartInfo })
+
+            using var process = new Process { StartInfo = processStartInfo };
+
+            process.Start();
+
+            await process.WaitForExitAsync();
+
+            var output = await process.StandardOutput.ReadToEndAsync();
+            var error = await process.StandardError.ReadToEndAsync();
+
+            if (Log)
             {
-                process.Start();
-                await process.WaitForExitAsync();
-                if (Log) Console.WriteLine($"ExitCode : {process.ExitCode} - {process.ExitCode.ToDescription()}");
-                return process.ExitCode == 0;
+                Console.WriteLine($"Output: {output}");
+                Console.WriteLine($"Error: {error}");
+                Console.WriteLine($"ExitCode : {process.ExitCode} - {process.ExitCode.ToDescription()}");
             }
+
+            return (process.ExitCode == 0 || process.ExitCode == 3) && !output.Contains("not found", StringComparison.OrdinalIgnoreCase);
         }
     }
 
