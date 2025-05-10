@@ -21,12 +21,12 @@
 ## 4. Documentation
 - Add example error handling and troubleshooting section to README.
 - Add contribution guidelines if open source.
-- Ensure all public APIs are fully documented, including exceptions.
+- DONE: Ensure all public APIs are fully documented, including exceptions.
 
 ## 5. Usability & API Design
-- Consider a fluent builder for PrintOptions.
-- Make cancellation and timeout parameters consistent across all async methods.
-- Consider returning a result object (output, error, exit code) instead of just exit code.
+- DONE: Consider a fluent builder for PrintOptions.
+- DONE: Make cancellation and timeout parameters consistent across all async methods.
+- NOPE: Consider returning a result object (output, error, exit code) instead of just exit code.
 
 ## 6. Robustness
 - Allow specifying full path to 2Printer.exe for non-standard installs.

@@ -176,6 +176,7 @@ namespace ToPrinterWrapper
         /// <param name="fileName">The path to the file to print.</param>
         /// <param name="printerName">The name of the printer.</param>
         /// <param name="printOptions">The print options.</param>
+        /// <param name="timeout">Optional timeout for the print process.</param>
         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
         /// <returns>The exit code from 2Printer.</returns>
         public async Task<int> PrintDocumentAsync(string fileName, string printerName, PrintOptions printOptions, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
@@ -184,7 +185,7 @@ namespace ToPrinterWrapper
             var delete = printOptions.DeleteFile;
             printOptions.DeleteFile = null;
             var exitCode =  await PrintDocumentAsync(fileName, printerName, args, timeout, cancellationToken);
-            if(delete == true) await DeleteFile(fileName);
+            if(delete == true) DeleteFile(fileName);
             return exitCode;
         }
 
@@ -194,6 +195,7 @@ namespace ToPrinterWrapper
         /// <param name="stream">The stream containing the document to print.</param>
         /// <param name="printerName">The name of the printer.</param>
         /// <param name="printOptions">The print options.</param>
+        /// <param name="timeout">Optional timeout for the print process.</param>
         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
         /// <returns>The exit code from 2Printer.</returns>
         public async Task<int> PrintDocumentAsync(Stream stream, string printerName, PrintOptions printOptions, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
@@ -208,11 +210,11 @@ namespace ToPrinterWrapper
             }
 
             var exitCode = await PrintDocumentAsync(tempFile, printerName, printOptions, timeout, cancellationToken);
-            await DeleteFile(tempFile);
+            DeleteFile(tempFile);
             return exitCode;
         }
 
-        private Task DeleteFile(string fileName)
+        private void DeleteFile(string fileName)
         {
             try
             {
@@ -230,7 +232,6 @@ namespace ToPrinterWrapper
                 _fileDeleteQueue.Enqueue(fileName);
             }
             // Other exceptions are ignored for now
-            return Task.CompletedTask;
         }
 
         /// <summary>
