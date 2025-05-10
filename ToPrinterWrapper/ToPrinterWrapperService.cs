@@ -1,3 +1,4 @@
+using System.Security;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
@@ -24,7 +25,8 @@ namespace ToPrinterWrapper
             {
                 Log = options.Value.Log,
                 Silent = options.Value.Silent,
-                CheckPrinterStatus = options.Value.CheckPrinterStatus
+                CheckPrinterStatus = options.Value.CheckPrinterStatus,
+                ThrowExceptions = options.Value.ThrowExceptions
             };
         }
 
@@ -75,5 +77,9 @@ namespace ToPrinterWrapper
         /// Gets or sets a value indicating whether to check the printer status before printing.
         /// </summary>
         public bool CheckPrinterStatus { get; set; } = true;
+        /// <summary>
+        /// Gets or sets a value indicating whether to throw exceptions on errors.
+        /// </summary>
+        public bool ThrowExceptions { get; set; } = false;
     }
 }

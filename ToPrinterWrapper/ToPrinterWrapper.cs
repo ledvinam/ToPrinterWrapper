@@ -42,6 +42,11 @@ namespace ToPrinterWrapper
         /// </summary>
         public bool CheckPrinterStatus { get; set; } = true;
 
+        /// <summary>
+        /// Gets or sets a value indicating whether to throw exceptions on errors.
+        /// </summary>
+        public bool ThrowExceptions { get; set; } = true;
+
         #endregion
 
         private readonly SemaphoreSlim _concurrentPrintingSemaphore;       
@@ -115,7 +120,8 @@ namespace ToPrinterWrapper
         {
             if (string.IsNullOrWhiteSpace(arguments))
             {
-                throw new ArgumentException("Arguments cannot be null or empty.", nameof(arguments));
+                if (ThrowExceptions) throw new ArgumentException("Arguments cannot be null or empty.", nameof(arguments));
+                return ErrorCodes.InvalidParameter;
             }
 
             if(CheckPrinterStatus)
@@ -127,6 +133,7 @@ namespace ToPrinterWrapper
                     {
                         Console.WriteLine($"Printer '{printerName}' is not online. Error code: {printerError}");
                     }
+                    if (ThrowExceptions) throw new InvalidOperationException($"Printer '{printerName}' is not online. Error code: {printerError}");
                     return printerError;
                 }
             }
@@ -154,7 +161,16 @@ namespace ToPrinterWrapper
 
                 using var process = new Process { StartInfo = processStartInfo, EnableRaisingEvents = false };
 
-                process.Start();
+                try
+                {
+                    process.Start();
+                }
+                catch (Exception ex)
+                {
+                    if (ThrowExceptions) throw new InvalidOperationException($"Failed to start process '{ToPrinterCommand}'.", ex);
+                    if (Log) Console.WriteLine($"Failed to start process: {ex.Message}");
+                    return ErrorCodes.ExeLaunchError;
+                }
 
 #if NET6_0
                 var outputTask = process.StandardOutput.ReadToEndAsync();
@@ -174,7 +190,8 @@ namespace ToPrinterWrapper
                     {
                         // Ensure output and error are read even if cancelled
                         await Task.WhenAll(outputTask, errorTask);
-                        throw;
+                        if (ThrowExceptions) throw;
+                        return ErrorCodes.CanceledByUser;
                     }
                 }
 
@@ -186,6 +203,11 @@ namespace ToPrinterWrapper
                     Console.WriteLine($"Output: {output}");
                     Console.WriteLine($"Error: {error}");
                     Console.WriteLine($"ExitCode : {process.ExitCode} - {process.ExitCode.ToDescription()}");
+                }
+
+                if (process.ExitCode != 0 && ThrowExceptions)
+                {
+                    throw new InvalidOperationException($"Printer exited with code {process.ExitCode}: {error}");
                 }
 
                 return process.ExitCode;
@@ -304,7 +326,16 @@ namespace ToPrinterWrapper
 
             using var process = new Process { StartInfo = processStartInfo };
 
-            process.Start();
+            try
+            {
+                process.Start();
+            }
+            catch (Exception ex)
+            {
+                if (ThrowExceptions) throw new InvalidOperationException($"Failed to start process '{ToPrinterCommand}'.", ex);
+                if (Log) Console.WriteLine($"Failed to start process: {ex.Message}");
+                return ErrorCodes.ExeLaunchError;
+            }
 
             await process.WaitForExitAsync();
 
@@ -318,13 +349,29 @@ namespace ToPrinterWrapper
                 Console.WriteLine($"ExitCode : {process.ExitCode} - {process.ExitCode.ToDescription()}");
             }
 
-            if(output.Contains("not found", StringComparison.OrdinalIgnoreCase))
+            if(process.ExitCode == 0 && output.Contains("not found", StringComparison.OrdinalIgnoreCase))
             {
-                return 1001;
+                if (ThrowExceptions) throw new InvalidOperationException($"Printer '{printerName}' not found.");
+                return ErrorCodes.PrinterNotFound;
+            }
+            else if (process.ExitCode == 0 && output.Contains("offline", StringComparison.OrdinalIgnoreCase))
+            {
+                if (ThrowExceptions) throw new InvalidOperationException($"Printer '{printerName}' is offline.");
+                return ErrorCodes.PrinterOffline;
+            }
+            else if (process.ExitCode == 0 && output.Contains("error", StringComparison.OrdinalIgnoreCase))
+            {
+                if (ThrowExceptions) throw new InvalidOperationException($"Printer '{printerName}' error: {output}");
+                return ErrorCodes.PrinterError;
             }
             else if (process.ExitCode == 3)
             {
                 return 0;
+            }
+
+            if (process.ExitCode != 0 && ThrowExceptions)
+            {
+                throw new InvalidOperationException($"Printer exited with code {process.ExitCode}: {error}");
             }
 
             return process.ExitCode;
