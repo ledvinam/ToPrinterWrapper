@@ -75,18 +75,22 @@ namespace ToPrinterWrapper
         }
 
         /// <summary>
-        /// Prints a document using the specified 2Printer arguments.
+        /// Prints a document using the specified 2Printer arguments, with optional timeout.
         /// </summary>
         /// <param name="arguments">The command-line arguments for 2Printer.</param>
         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <param name="timeout">Optional timeout for the print process.</param>
         /// <returns>The exit code from 2Printer.</returns>
-        public async Task<int> PrintDocumentAsync(string arguments, CancellationToken cancellationToken = default)
+        public async Task<int> PrintDocumentAsync(string arguments, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(arguments))
             {
                 throw new ArgumentException("Arguments cannot be null or empty.", nameof(arguments));
             }
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdownCts.Token);
+            using var timeoutCts = timeout.HasValue ? new CancellationTokenSource(timeout.Value) : null;
+            using var linkedCts = timeoutCts != null
+                ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdownCts.Token, timeoutCts.Token)
+                : CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdownCts.Token);
             await _concurrentPrintingSemaphore.WaitAsync(linkedCts.Token);
             try
             {
@@ -102,7 +106,6 @@ namespace ToPrinterWrapper
 
                 var outputBuilder = new StringBuilder();
                 var errorBuilder = new StringBuilder();
-                
                 using (var process = new Process { StartInfo = processStartInfo, EnableRaisingEvents = false })
                 {
                     process.OutputDataReceived += (sender, e) =>
@@ -113,6 +116,7 @@ namespace ToPrinterWrapper
                             if (Log) Console.WriteLine($"Output: {e.Data}");
                         }
                     };
+                    
                     process.ErrorDataReceived += (sender, e) =>
                     {
                         if (e.Data != null)
@@ -121,14 +125,19 @@ namespace ToPrinterWrapper
                             if (Log) Console.WriteLine($"Error: {e.Data}");
                         }
                     };
+                    
                     process.Start();
+                    
                     process.BeginOutputReadLine();
                     process.BeginErrorReadLine();
+                    
                     using (linkedCts.Token.Register(() => { try { if (!process.HasExited) process.Kill(); } catch { } }))
                     {
                         await process.WaitForExitAsync(linkedCts.Token);
                     }
+
                     if (Log) Console.WriteLine($"ExitCode : {process.ExitCode} - {process.ExitCode.ToDescription()}");
+                    
                     return process.ExitCode;
                 }
             }
@@ -146,14 +155,14 @@ namespace ToPrinterWrapper
         /// <param name="printOptions">The print options.</param>
         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
         /// <returns>The exit code from 2Printer.</returns>
-        public async Task<int> PrintDocumentAsync(string fileName, string printerName, PrintOptions printOptions, CancellationToken cancellationToken = default)
+        public async Task<int> PrintDocumentAsync(string fileName, string printerName, PrintOptions printOptions, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             string arguments = $"-src \"{fileName}\" -prn \"{printerName}\" -options alerts:no silent:yes log:no -props spjob:yes {printOptions.BuildArguments()}";
             if (Log) Console.WriteLine($"Executing: {ToPrinterCommand} {arguments}");
 
             var delete = printOptions.DeleteFile;
             printOptions.DeleteFile = null;
-            var exitCode =  await PrintDocumentAsync(arguments, cancellationToken);
+            var exitCode =  await PrintDocumentAsync(arguments, timeout, cancellationToken);
             if(delete == true) _fileDeleteQueue.Enqueue(fileName);
             return exitCode;
         }
@@ -166,7 +175,7 @@ namespace ToPrinterWrapper
         /// <param name="printOptions">The print options.</param>
         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
         /// <returns>The exit code from 2Printer.</returns>
-        public async Task<int> PrintDocumentAsync(Stream stream, string printerName, PrintOptions printOptions, CancellationToken cancellationToken = default)
+        public async Task<int> PrintDocumentAsync(Stream stream, string printerName, PrintOptions printOptions, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             string tempFile = Path.Combine(PrintPath, $"{Guid.NewGuid().ToString()}.tmp");
             printOptions.DeleteFile = null;
@@ -176,7 +185,7 @@ namespace ToPrinterWrapper
                 stream.Seek(0, SeekOrigin.Begin);
                 await stream.CopyToAsync(fileStream, 81920, cancellationToken);
             }
-            var exitCode = await PrintDocumentAsync(tempFile, printerName, printOptions, cancellationToken);
+            var exitCode = await PrintDocumentAsync(tempFile, printerName, printOptions, timeout, cancellationToken);
             _fileDeleteQueue.Enqueue(tempFile);
             return exitCode;
         }

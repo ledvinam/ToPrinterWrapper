@@ -40,4 +40,8 @@
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Copy SourceFiles="$(MSBuildProjectDirectory)\test.pdf" DestinationFolder="$(OutputPath)" />
   </Target>
+
+  <Target Name="CopyReadme" BeforeTargets="Pack">
+  <Copy SourceFiles="$(ProjectDir)README.md" DestinationFiles="$(SolutionDir)README.md" />
+</Target>
 </Project>
