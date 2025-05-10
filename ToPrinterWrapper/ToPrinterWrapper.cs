@@ -8,7 +8,7 @@ namespace ToPrinterWrapper
     /// <summary>
     /// Provides automated printing functionality using 2Printer and PDF printers with async, concurrency, and cancellation support.
     /// </summary>
-    public class ToPrinter
+    public class ToPrinter : IAsyncDisposable
     {
         #region Public Properties
         
@@ -85,9 +85,16 @@ namespace ToPrinterWrapper
             _fileDeleteQueue?.Dispose();
         }
 
+        public async ValueTask DisposeAsync()
+        {
+            await ShutdownAsync();
+        }
+
         /// <summary>
         /// Prints a document using the specified 2Printer arguments, with optional timeout.
         /// </summary>
+        /// <param name="filePath">The path to the file to print.</param>
+        /// <param name="printerName">The name of the printer.</param>
         /// <param name="arguments">The command-line arguments for 2Printer.</param>
         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
         /// <param name="timeout">Optional timeout for the print process.</param>

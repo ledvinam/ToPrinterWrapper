@@ -1,0 +1,42 @@
+name: .NET Build, Test, and Pack
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - name: Restore dependencies
+        run: dotnet restore ToPrinter.sln
+      - name: Build
+        run: dotnet build ToPrinter.sln --configuration Release --no-restore
+      - name: Test
+        run: dotnet test ToPrinter.sln --configuration Release --no-build --verbosity normal
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v1
+        with:
+          versionSpec: '5.x'
+      - name: Run GitVersion
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v1
+      - name: Set version for .NET pack
+        run: |
+          echo "##[set-output name=version;]${{ steps.gitversion.outputs.nuGetVersionV2 }}"
+      - name: Pack (GitVersion)
+        run: dotnet pack ToPrinterWrapper/ToPrinterWrapper.csproj --configuration Release --no-build --output ./nupkg /p:PackageVersion=${{ steps.gitversion.outputs.nuGetVersionV2 }}
+        env:
+          GitVersion_NuGetVersionV2: ${{ steps.gitversion.outputs.nuGetVersionV2 }}
+      - name: Upload NuGet Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package
+          path: ./nupkg/*.nupkg

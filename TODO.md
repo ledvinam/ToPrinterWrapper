@@ -5,7 +5,7 @@
 - Replace `Console.WriteLine` with Microsoft.Extensions.Logging for better logging.
 - Make more settings (e.g., 2Printer path, log level) configurable via DI or appsettings.
 - Improve error handling and reporting, consider custom exceptions.
-- Ensure all async resources are disposed properly (e.g., implement IAsyncDisposable where needed).
+- DONE: Ensure all async resources are disposed properly (e.g., implement IAsyncDisposable where needed).
 
 ## 2. Testing
 - Add negative tests (invalid arguments, missing files, permission errors).
@@ -34,9 +34,9 @@
 - Ensure all process output is read even on cancellation/kill to avoid deadlocks.
 
 ## 7. Build & Packaging
-- Ensure symbols and XML docs are included in NuGet package.
-- Add CI/CD workflow for build, test, and package validation.
-- Consider automated versioning (e.g., GitVersion).
+- DONE: Ensure symbols and XML docs are included in NuGet package.
+- DONE: Add CI/CD workflow for build, test, and package validation.
+- DONE: Consider automated versioning (e.g., GitVersion).
 
 ## 8. Miscellaneous
 - Ensure .gitignore covers all generated files.
