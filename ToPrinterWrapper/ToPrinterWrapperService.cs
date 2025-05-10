@@ -26,7 +26,10 @@ namespace ToPrinterWrapper
                 Log = options.Value.Log,
                 Silent = options.Value.Silent,
                 CheckPrinterStatus = options.Value.CheckPrinterStatus,
-                ThrowExceptions = options.Value.ThrowExceptions
+                ThrowExceptions = options.Value.ThrowExceptions,
+                MemoryPressureEnabled = options.Value.MemoryPressureEnabled,
+                MaxSystemMemoryUsageRatio = options.Value.MaxSystemMemoryUsageRatio,
+                MemoryPressurePollIntervalMs = options.Value.MemoryPressurePollIntervalMs
             };
         }
 
