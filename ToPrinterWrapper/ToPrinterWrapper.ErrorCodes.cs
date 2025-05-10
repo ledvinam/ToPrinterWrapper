@@ -8,7 +8,11 @@ namespace ToPrinterWrapper
         public const int Ok = 0;
         [Description("Error")]
         public const int Error = 1;
-        [Description("All actions failed")]
+        [Description("Printer not found")]
+        public const int PrinterNotFound = 1000;
+        [Description("Printer Offline")]
+        public const int PrinterOffline = 1001;
+        [Description("All actions failed")]        
         public const int AllActionsFailed = 1094796908;
         [Description("Access denied")]
         public const int AccessDenied = 1094927438;

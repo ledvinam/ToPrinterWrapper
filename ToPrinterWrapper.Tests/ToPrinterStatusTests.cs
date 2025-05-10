@@ -14,7 +14,7 @@ namespace ToPrinterWrapper.Tests
         {
             var printer = new ToPrinter(Tests.PrintPath);
             printer.Silent = false;
-            bool isOnline = await printer.IsPrinterOnlineAsync(printerName);
+            bool isOnline = await printer.IsPrinterOnlineAsync(printerName) == 0;
             // This will only pass if the printer is actually online and accessible from the test machine
             Assert.True(isOnline, $"Printer '{printerName}' should be online.");
         }
@@ -25,7 +25,7 @@ namespace ToPrinterWrapper.Tests
             var printer = new ToPrinter(Tests.PrintPath);
             printer.Silent = false;
             string fakePrinter = "\\\\NONEXISTENT-SERVER\\FakePrinter";
-            bool isOnline = await printer.IsPrinterOnlineAsync(fakePrinter);
+            bool isOnline = await printer.IsPrinterOnlineAsync(fakePrinter) == 0;
             Assert.False(isOnline, $"Non-existent printer '{fakePrinter}' should not be online.");
         }
     }

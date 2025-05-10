@@ -20,7 +20,12 @@ namespace ToPrinterWrapper
         /// <param name="options">The options for configuring the ToPrinter instance.</param>
         public ToPrinterWrapperService(IOptions<ToPrinterOptions> options)
         {
-            _printer = new ToPrinter(options.Value.PrintPath, options.Value.MaxConcurrentPrintingJobs);
+            _printer = new ToPrinter(options.Value.PrintPath, options.Value.MaxConcurrentPrintingJobs)
+            {
+                Log = options.Value.Log,
+                Silent = options.Value.Silent,
+                CheckPrinterStatus = options.Value.CheckPrinterStatus
+            };
         }
 
         /// <summary>
@@ -58,5 +63,17 @@ namespace ToPrinterWrapper
         /// Gets or sets the maximum number of concurrent printing jobs.
         /// </summary>
         public int MaxConcurrentPrintingJobs { get; set; } = 10;
+        /// <summary>
+        /// Gets or sets a value indicating whether to log the printing process.
+        /// </summary>
+        public bool Log { get; set; } = false;
+        /// <summary>
+        /// Gets or sets a value indicating whether to show alerts during the printing process.
+        /// </summary>
+        public bool Silent { get; set; } = true;
+        /// <summary>
+        /// Gets or sets a value indicating whether to check the printer status before printing.
+        /// </summary>
+        public bool CheckPrinterStatus { get; set; } = true;
     }
 }

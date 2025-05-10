@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Text;
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 
 namespace ToPrinterWrapper
 {
@@ -35,6 +36,11 @@ namespace ToPrinterWrapper
         /// Gets or sets a value indicating whether to write output and errors to the console.
         /// </summary>
         public bool Silent { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to check the printer status before printing.
+        /// </summary>
+        public bool CheckPrinterStatus { get; set; } = true;
 
         #endregion
 
@@ -86,12 +92,29 @@ namespace ToPrinterWrapper
         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
         /// <param name="timeout">Optional timeout for the print process.</param>
         /// <returns>The exit code from 2Printer.</returns>
-        public async Task<int> PrintDocumentAsync(string arguments, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
+        public async Task<int> PrintDocumentAsync(string filePath, string printerName, string arguments, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(arguments))
             {
                 throw new ArgumentException("Arguments cannot be null or empty.", nameof(arguments));
             }
+
+            if(CheckPrinterStatus)
+            {
+                var printerError = await IsPrinterOnlineAsync(printerName);
+                if (printerError != 0)
+                {
+                    if (Log)
+                    {
+                        Console.WriteLine($"Printer '{printerName}' is not online. Error code: {printerError}");
+                    }
+                    return printerError;
+                }
+            }
+
+            var args = $"-src \"{filePath}\" -prn \"{printerName}\" {arguments}";
+            if (Log) Console.WriteLine($"Executing: {ToPrinterCommand} {args}");
+
             using var timeoutCts = timeout.HasValue ? new CancellationTokenSource(timeout.Value) : null;
             using var linkedCts = timeoutCts != null
                 ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdownCts.Token, timeoutCts.Token)
@@ -102,7 +125,7 @@ namespace ToPrinterWrapper
                 var processStartInfo = new ProcessStartInfo
                 {
                     FileName = ToPrinterCommand,
-                    Arguments = arguments,
+                    Arguments = args,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -129,8 +152,8 @@ namespace ToPrinterWrapper
                     output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
                     error = await process.StandardError.ReadToEndAsync(cancellationToken);
 #endif
-                    Console.WriteLine($"Output: {await process.StandardOutput.ReadToEndAsync()}");
-                    Console.WriteLine($"Error: {await process.StandardError.ReadToEndAsync()}");
+                    Console.WriteLine($"Output: {output}");
+                    Console.WriteLine($"Error: {error}");
                     Console.WriteLine($"ExitCode : {process.ExitCode} - {process.ExitCode.ToDescription()}");
                 }
 
@@ -152,12 +175,10 @@ namespace ToPrinterWrapper
         /// <returns>The exit code from 2Printer.</returns>
         public async Task<int> PrintDocumentAsync(string fileName, string printerName, PrintOptions printOptions, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
-            string arguments = $"-src \"{fileName}\" -prn \"{printerName}\" -options alerts:no silent:{(Silent ? "yes" : "no")} log:no -props spjob:yes {printOptions.BuildArguments()}";
-            if (Log) Console.WriteLine($"Executing: {ToPrinterCommand} {arguments}");
-
+            string args = $"-options alerts:no silent:{(Silent ? "yes" : "no")} log:no -props spjob:yes {printOptions.BuildArguments()}";
             var delete = printOptions.DeleteFile;
             printOptions.DeleteFile = null;
-            var exitCode =  await PrintDocumentAsync(arguments, timeout, cancellationToken);
+            var exitCode =  await PrintDocumentAsync(fileName, printerName, args, timeout, cancellationToken);
             if(delete == true) _fileDeleteQueue.Enqueue(fileName);
             return exitCode;
         }
@@ -190,7 +211,7 @@ namespace ToPrinterWrapper
         /// </summary>
         /// <param name="printerName">The name of the printer to check.</param>
         /// <returns>True if the printer is online, false otherwise.</returns>
-        public async Task<bool> IsPrinterOnlineAsync(string printerName)
+        public async Task<int> IsPrinterOnlineAsync(string printerName)
         {
             var processStartInfo = new ProcessStartInfo
             {
@@ -218,7 +239,16 @@ namespace ToPrinterWrapper
                 Console.WriteLine($"ExitCode : {process.ExitCode} - {process.ExitCode.ToDescription()}");
             }
 
-            return (process.ExitCode == 0 || process.ExitCode == 3) && !output.Contains("not found", StringComparison.OrdinalIgnoreCase);
+            if(output.Contains("not found", StringComparison.OrdinalIgnoreCase))
+            {
+                return 1001;
+            }
+            else if (process.ExitCode == 3)
+            {
+                return 0;
+            }
+
+            return process.ExitCode;
         }
     }
 
