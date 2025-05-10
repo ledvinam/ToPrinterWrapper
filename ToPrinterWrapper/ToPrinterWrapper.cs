@@ -105,6 +105,7 @@ namespace ToPrinterWrapper
         public async Task ShutdownAsync()
         {
             if (_shutdown) return;
+            if(Log) Console.WriteLine("Shutting down ToPrinter...");
             _shutdown = true;
             _shutdownCts.Cancel();
 
@@ -115,13 +116,11 @@ namespace ToPrinterWrapper
 
             _concurrentPrintingSemaphore?.Dispose();
             _fileDeleteQueue?.Dispose();
+            if(Log) Console.WriteLine("ToPrinter shutdown complete.");
         }
 
-        public async ValueTask DisposeAsync()
-        {
-            await ShutdownAsync();
-        }
-
+        public async ValueTask DisposeAsync() => await ShutdownAsync();
+        
         /// <summary>
         /// Prints a document using the specified 2Printer arguments, with optional timeout.
         /// </summary>
@@ -144,10 +143,7 @@ namespace ToPrinterWrapper
                 var printerError = await IsPrinterOnlineAsync(printerName);
                 if (printerError != 0)
                 {
-                    if (Log)
-                    {
-                        Console.WriteLine($"Printer '{printerName}' is not online. Error code: {printerError}");
-                    }
+                    if (Log) Console.WriteLine($"Printer '{printerName}' is not online. Error code: {printerError}");
                     if (ThrowExceptions) throw new InvalidOperationException($"Printer '{printerName}' is not online. Error code: {printerError}");
                     return printerError;
                 }
