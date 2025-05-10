@@ -14,9 +14,9 @@
 - Enable test parallelization for unrelated tests if possible.
 
 ## 3. Performance
-- Consider using BlockingCollection or Channel in FileDeleteQueue for better producer/consumer pattern.
-- Ensure semaphore is not over-released in error cases.
-- Use `await using` for streams to ensure proper disposal.
+- DONE : Consider using BlockingCollection or Channel in FileDeleteQueue for better producer/consumer pattern.
+- DONE : Ensure semaphore is not over-released in error cases.
+- DONE : Use `await using` for streams to ensure proper disposal.
 
 ## 4. Documentation
 - Add example error handling and troubleshooting section to README.

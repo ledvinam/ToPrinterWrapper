@@ -120,6 +120,7 @@ namespace ToPrinterWrapper
                 ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdownCts.Token, timeoutCts.Token)
                 : CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdownCts.Token);
             await _concurrentPrintingSemaphore.WaitAsync(linkedCts.Token);
+            var semaphoreReleased = false;
             try
             {
                 var processStartInfo = new ProcessStartInfo
@@ -161,7 +162,11 @@ namespace ToPrinterWrapper
             }
             finally
             {
-                _concurrentPrintingSemaphore.Release();
+                if (!semaphoreReleased)
+                {
+                    _concurrentPrintingSemaphore.Release();
+                    semaphoreReleased = true;
+                }
             }
         }
 
@@ -179,7 +184,7 @@ namespace ToPrinterWrapper
             var delete = printOptions.DeleteFile;
             printOptions.DeleteFile = null;
             var exitCode =  await PrintDocumentAsync(fileName, printerName, args, timeout, cancellationToken);
-            if(delete == true) _fileDeleteQueue.Enqueue(fileName);
+            if(delete == true) await DeleteFile(fileName);
             return exitCode;
         }
 
@@ -196,14 +201,36 @@ namespace ToPrinterWrapper
             string tempFile = Path.Combine(PrintPath, $"{Guid.NewGuid().ToString()}.tmp");
             printOptions.DeleteFile = null;
            
-            using (var fileStream = File.OpenWrite(tempFile))
+            await using (var fileStream = File.OpenWrite(tempFile))
             {
                 stream.Seek(0, SeekOrigin.Begin);
                 await stream.CopyToAsync(fileStream, 81920, cancellationToken);
             }
+
             var exitCode = await PrintDocumentAsync(tempFile, printerName, printOptions, timeout, cancellationToken);
-            _fileDeleteQueue.Enqueue(tempFile);
+            await DeleteFile(tempFile);
             return exitCode;
+        }
+
+        private Task DeleteFile(string fileName)
+        {
+            try
+            {
+                if (System.IO.File.Exists(fileName))
+                {
+                    System.IO.File.Delete(fileName);
+                }
+            }
+            catch (IOException)
+            {
+                _fileDeleteQueue.Enqueue(fileName);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                _fileDeleteQueue.Enqueue(fileName);
+            }
+            // Other exceptions are ignored for now
+            return Task.CompletedTask;
         }
 
         /// <summary>
