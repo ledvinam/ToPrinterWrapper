@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>ToPrinterWrapper</PackageId>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <Authors>Marek Ledvina</Authors>
     <Company>Foriero s.r.o.</Company>
     <Description>Automated printing wrapper for 2Printer and PDF printers with async, concurrency, and ASP.NET support.</Description>
