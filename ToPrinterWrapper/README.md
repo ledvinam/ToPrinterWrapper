@@ -150,6 +150,41 @@ To ensure the RAM disk is always available (e.g., after reboot), you can automat
 ## Concurrency Testing
 - The library can be tested for concurrency by launching multiple print jobs in parallel and verifying the maximum concurrency does not exceed the configured limit.
 
+## Error Handling & Troubleshooting
+
+### Example Error Handling
+
+```csharp
+try
+{
+    int exitCode = await printer.PrintDocumentAsync("file.pdf", "Bullzip PDF Printer", options);
+    if (exitCode != 0)
+    {
+        Console.WriteLine($"Printing failed: {exitCode} - {exitCode.ToDescription()}");
+        // Handle specific error codes as needed
+    }
+}
+catch (OperationCanceledException)
+{
+    Console.WriteLine("Printing was cancelled.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Unexpected error: {ex.Message}");
+}
+```
+
+### Troubleshooting
+
+- **2Printer.exe not found:** Ensure 2Printer is installed and available in your PATH or working directory.
+- **RAM disk not available:** If the configured print path (e.g., `R:\`) does not exist, the library will fall back to the system temp directory. Check your RAM disk setup if you expect to use it.
+- **Permission errors:** Run your application with sufficient permissions to access printers and file paths.
+- **Printer not found or offline:** Verify the printer name and network connectivity. Use `IsPrinterOnlineAsync` to check printer status.
+- **File locked or not deleted:** The library retries file deletion if a file is temporarily locked. If files remain, check for open handles or antivirus interference.
+- **Unhandled exceptions:** Wrap print calls in try/catch and log or handle exceptions as appropriate for your application.
+
+For more help, please open an issue on GitHub with details about your environment and error messages.
+
 ## Requirements
 - .NET 6.0 or later (multi-targets .NET 6, 7, 8, 9)
 - [2Printer](https://www.cmd2printer.com/) (must be purchased separately)

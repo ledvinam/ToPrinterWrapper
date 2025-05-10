@@ -19,8 +19,8 @@
 - DONE : Use `await using` for streams to ensure proper disposal.
 
 ## 4. Documentation
-- Add example error handling and troubleshooting section to README.
-- Add contribution guidelines if open source.
+- DONE: Add example error handling and troubleshooting section to README.
+- DONE: Add contribution guidelines if open source.
 - DONE: Ensure all public APIs are fully documented, including exceptions.
 
 ## 5. Usability & API Design
@@ -29,9 +29,9 @@
 - NOPE: Consider returning a result object (output, error, exit code) instead of just exit code.
 
 ## 6. Robustness
-- Allow specifying full path to 2Printer.exe for non-standard installs.
-- Validate and fallback if RAM disk is not available.
-- Ensure all process output is read even on cancellation/kill to avoid deadlocks.
+- NOPE : Allow specifying full path to 2Printer.exe for non-standard installs.
+- DONE : Validate and fallback if RAM disk is not available.
+- DONE : Ensure all process output is read even on cancellation/kill to avoid deadlocks.
 
 ## 7. Build & Packaging
 - DONE: Ensure symbols and XML docs are included in NuGet package.
@@ -39,5 +39,5 @@
 - DONE: Consider automated versioning (e.g., GitVersion).
 
 ## 8. Miscellaneous
-- Ensure .gitignore covers all generated files.
-- Add error handling and comments to .cmd scripts for maintainability.
+- DONE: Ensure .gitignore covers all generated files.
+- DONE: Add error handling and comments to .cmd scripts for maintainability.

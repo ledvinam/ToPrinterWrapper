@@ -56,15 +56,27 @@ namespace ToPrinterWrapper
         /// <param name="maxConcurrentPrintingJobs">The maximum number of concurrent printing jobs.</param>
         public ToPrinter(string printPath = @"C:\ToPrinter\", int maxConcurrentPrintingJobs = 10)
         {
+            // Validate RAM disk or fallback to default temp path
+            if (!Directory.Exists(printPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(printPath);
+                }
+                catch
+                {
+                    // Fallback to system temp path if RAM disk or custom path is not available
+                    printPath = Path.GetTempPath();
+                    if (!Directory.Exists(printPath))
+                    {
+                        Directory.CreateDirectory(printPath);
+                    }
+                }
+            }
+            
             PrintPath = printPath;
             MaxConcurrentPrintingJobs = maxConcurrentPrintingJobs;
-
             _concurrentPrintingSemaphore = new SemaphoreSlim(MaxConcurrentPrintingJobs);
-            
-            if (!Directory.Exists(PrintPath))
-            {
-                Directory.CreateDirectory(PrintPath);
-            }
         }
           
         /// <summary>
@@ -144,22 +156,33 @@ namespace ToPrinterWrapper
 
                 process.Start();
 
+#if NET6_0
+                var outputTask = process.StandardOutput.ReadToEndAsync();
+                var errorTask = process.StandardError.ReadToEndAsync();
+#else
+                var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+                var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
+#endif
+
                 using (linkedCts.Token.Register(() => { try { if (!process.HasExited) process.Kill(); } catch { } }))
                 {
-                    await process.WaitForExitAsync(linkedCts.Token);
+                    try
+                    {
+                        await process.WaitForExitAsync(linkedCts.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Ensure output and error are read even if cancelled
+                        await Task.WhenAll(outputTask, errorTask);
+                        throw;
+                    }
                 }
+
+                var output = await outputTask;
+                var error = await errorTask;
 
                 if (Log)
                 {
-                    var output = "";
-                    var error = "";
-#if NET6_0
-                    output = await process.StandardOutput.ReadToEndAsync();
-                    error = await process.StandardError.ReadToEndAsync();
-#else
-                    output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
-                    error = await process.StandardError.ReadToEndAsync(cancellationToken);
-#endif
                     Console.WriteLine($"Output: {output}");
                     Console.WriteLine($"Error: {error}");
                     Console.WriteLine($"ExitCode : {process.ExitCode} - {process.ExitCode.ToDescription()}");

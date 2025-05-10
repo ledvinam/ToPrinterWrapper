@@ -35,7 +35,6 @@ ScaffoldingReadMe.txt
 
 # NuGet Packages
 *.nupkg
-# NuGet Symbol Packages
 *.snupkg
 
 # Others
@@ -54,3 +53,52 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Rider
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+
+# DotCover
+*.dotCover
+
+# Coverlet
+coverage*.json
+coverage*.xml
+coverage*.info
+
+# SonarQube
+.sonar/
+
+# Local NuGet Packages
+*.nupkg.local
+
+# GitVersion
+GitVersion.yml
+
+# Workflow artifacts
+.github/workflows/*.yml.disabled
+
+# Ignore test PDFs and temp files
+*.tmp
+*.pdf
+!test.pdf
+
+# Ignore generated XML docs and PDBs
+*.xml
+*.pdb
+
+# Ignore package output
+nupkg/
