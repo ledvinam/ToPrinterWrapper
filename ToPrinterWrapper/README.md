@@ -185,6 +185,25 @@ catch (Exception ex)
 
 For more help, please open an issue on GitHub with details about your environment and error messages.
 
+## Thread Safety
+
+The `ToPrinterWrapper` class is mostly thread-safe for its intended usage, but with some caveats:
+
+| Feature/Method                | Thread-Safe? | Notes                                                      |
+|-------------------------------|--------------|------------------------------------------------------------|
+| PrintDocumentAsync (all)      | Yes*         | Concurrency limited by semaphore.                          |
+| FileDeleteQueue               | Yes          | Uses thread-safe collections.                              |
+| Property Setters (Log, etc.)  | No           | Not synchronized; avoid concurrent writes.                 |
+| PrintOptions usage            | No*          | Do not share/mutate across threads.                        |
+| ShutdownAsync/DisposeAsync    | Mostly       | Minor race possible if called concurrently.                |
+
+**Notice:**
+- Do not share or mutate `PrintOptions` across threads.
+- Avoid changing instance properties (`Log`, `Silent`, etc.) while printing is in progress.
+- If you need to change configuration at runtime, create a new `ToPrinterWrapper` instance.
+
+If you need full thread safety for property changes or shared configuration, consider adding locking or making the class immutable/configurable only at construction.
+
 ## Requirements
 - .NET 6.0 or later (multi-targets .NET 6, 7, 8, 9)
 - [2Printer](https://www.cmd2printer.com/) (must be purchased separately)
