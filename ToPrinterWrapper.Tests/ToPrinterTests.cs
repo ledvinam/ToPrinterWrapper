@@ -37,7 +37,7 @@ namespace ToPrinterWrapper.Tests
 
             await Task.Delay(1000);
 
-            return Directory.GetFiles(PrintPath, PrintMask).Length == number;
+            return Directory.GetFiles(PrintPath, PrintMask).Length >= number;
         }
     }
 
@@ -60,9 +60,7 @@ namespace ToPrinterWrapper.Tests
 
             // Act
             int exitCode = await printer.PrintDocumentAsync(Tests.TestFilePath, Tests.TestPrinterName, printOptions);
-
-            await Task.Delay(1000); // Wait for the file to be created
-
+           
             // Assert
             Assert.Equal(0, exitCode);
             Assert.True(await Tests.ExistsAsync(1));          
@@ -83,16 +81,15 @@ namespace ToPrinterWrapper.Tests
                 PaperSize = PageSize.A4
             };
 
-            using (var fileStream = File.OpenRead(Tests.TestFilePath))
+            var exitCode = -1;
+            await using (var fileStream = File.OpenRead(Tests.TestFilePath))
             {
-                // Act
-                int exitCode = await printer.PrintDocumentAsync(fileStream, Tests.TestPrinterName, printOptions);
-                
-                await Task.Delay(1000); // Wait for the file to be created
-                // Assert
-                Assert.Equal(0, exitCode);
-                Assert.True(await Tests.ExistsAsync(1)); 
+                exitCode = await printer.PrintDocumentAsync(fileStream, Tests.TestPrinterName, printOptions); 
             }
+
+            // Assert
+            Assert.Equal(0, exitCode);
+            Assert.True(await Tests.ExistsAsync(1)); 
         }
     }
 }

@@ -27,14 +27,12 @@ namespace ToPrinterWrapper.Tests
             // Act
             for (int i = 0; i < jobs; i++)
             {
-                var fileStream = File.OpenRead(Tests.TestFilePath);
+                await using var fileStream = File.OpenRead(Tests.TestFilePath);
                 tasks.Add(printer.PrintDocumentAsync(fileStream, Tests.TestPrinterName, printOptions));
             }
 
             await Task.WhenAll(tasks);
-
-            await Task.Delay(jobs * 1000); // Wait for all jobs to finish
-
+           
             Assert.True(await Tests.ExistsAsync(jobs)); 
         }
 
@@ -62,9 +60,7 @@ namespace ToPrinterWrapper.Tests
             }
             
             await Task.WhenAll(tasks);
-
-            await Task.Delay(jobs * 1000); // Wait for all jobs to finish
-
+         
             Assert.True(await Tests.ExistsAsync(jobs)); 
         }
     }
