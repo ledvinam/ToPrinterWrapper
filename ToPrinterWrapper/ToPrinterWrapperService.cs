@@ -81,5 +81,17 @@ namespace ToPrinterWrapper
         /// Gets or sets a value indicating whether to throw exceptions on errors.
         /// </summary>
         public bool ThrowExceptions { get; set; } = false;
+        /// <summary>
+        /// Gets or sets a value indicating whether to enable memory pressure handling.
+        /// </summary>
+        public bool MemoryPressureEnabled { get; set; } = false;
+        /// <summary>
+        /// Gets or sets the maximum system memory usage ratio for the ToPrinter instance.
+        /// </summary>
+        public double MaxSystemMemoryUsageRatio { get; set; } = 0.9;
+        /// <summary>
+        /// Gets or sets the maximum memory usage ratio for the ToPrinter instance.
+        /// </summary>
+        public int MemoryPressurePollIntervalMs { get; set; } = 1000;
     }
 }

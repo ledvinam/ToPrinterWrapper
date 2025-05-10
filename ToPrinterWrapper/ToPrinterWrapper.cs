@@ -47,6 +47,21 @@ namespace ToPrinterWrapper
         /// </summary>
         public bool ThrowExceptions { get; set; } = true;
 
+        /// <summary>
+        /// Gets or sets a value indicating whether to enable memory pressure handling.
+        /// </summary>
+        public bool MemoryPressureEnabled { get; set; } = false;
+
+        /// <summary>
+        /// Maximum allowed system memory usage ratio (0.0 - 1.0). If exceeded, new print jobs will wait until memory pressure is relieved. Default: 0.9 (90%).
+        /// </summary>
+        public double MaxSystemMemoryUsageRatio { get; set; } = 0.9;
+
+        /// <summary>
+        /// How often (ms) to poll for memory pressure relief when waiting. Default: 1000ms.
+        /// </summary>
+        public int MemoryPressurePollIntervalMs { get; set; } = 1000;
+
         #endregion
 
         private readonly SemaphoreSlim _concurrentPrintingSemaphore;       
@@ -145,6 +160,14 @@ namespace ToPrinterWrapper
             using var linkedCts = timeoutCts != null
                 ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdownCts.Token, timeoutCts.Token)
                 : CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdownCts.Token);
+
+            // Wait for system memory pressure to be relieved before starting a new print job
+            while (MemoryPressureEnabled && IsSystemMemoryPressureHigh(MaxSystemMemoryUsageRatio))
+            {
+                if (Log) Console.WriteLine($"[ToPrinter] System memory pressure high (>{MaxSystemMemoryUsageRatio:P0}). Waiting before starting new print job...");
+                await Task.Delay(MemoryPressurePollIntervalMs, linkedCts.Token);
+            }
+
             await _concurrentPrintingSemaphore.WaitAsync(linkedCts.Token);
             var semaphoreReleased = false;
             try
@@ -376,5 +399,46 @@ namespace ToPrinterWrapper
 
             return process.ExitCode;
         }
+
+#if NET6_0_OR_GREATER
+        private static bool IsSystemMemoryPressureHigh(double maxUsageRatio)
+        {
+            // Windows only: use GlobalMemoryStatusEx via P/Invoke for system-wide memory
+            MEMORYSTATUSEX memStatus = new MEMORYSTATUSEX();
+            if (GlobalMemoryStatusEx(memStatus))
+            {
+                ulong total = memStatus.ullTotalPhys;
+                ulong avail = memStatus.ullAvailPhys;
+                double usedRatio = (double)(total - avail) / total;
+                return usedRatio >= maxUsageRatio;
+            }
+            // If unable to determine, be conservative and do not block
+            return false;
+        }
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+        private class MEMORYSTATUSEX
+        {
+            public uint dwLength = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(MEMORYSTATUSEX));
+            public uint dwMemoryLoad;
+            public ulong ullTotalPhys;
+            public ulong ullAvailPhys;
+            public ulong ullTotalPageFile;
+            public ulong ullAvailPageFile;
+            public ulong ullTotalVirtual;
+            public ulong ullAvailVirtual;
+            public ulong ullAvailExtendedVirtual;
+        }
+
+        [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
+        [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+        private static extern bool GlobalMemoryStatusEx([System.Runtime.InteropServices.In, System.Runtime.InteropServices.Out] MEMORYSTATUSEX lpBuffer);
+#else
+        private static bool IsSystemMemoryPressureHigh(double maxUsageRatio)
+        {
+            // Not supported on this platform, do not block
+            return false;
+        }
+#endif
     }
 }
