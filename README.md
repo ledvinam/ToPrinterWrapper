@@ -231,5 +231,36 @@ If you need full thread safety for property changes or shared configuration, con
 - 2Printer.exe in PATH or working directory
 - (Optional) Bullzip PDF Printer for automated PDF output
 
+## Supported File Formats
+
+ToPrinterWrapper (via 2Printer) supports printing more than 90 file formats (over 115 file extensions), including:
+
+## Internal Engine File Formats
+
+2Printer (and thus ToPrinterWrapper) can print many file formats directly using its internal engine, without requiring additional software. These include:
+
+- **Images:** TIFF, TIF, JPG, JPEG, JFIF, GIF, BMP, PNG, TGA, DCM, RAW, PSD, CDR, PCX, DCX, EMF, WMF, SVG, WEBP, JBIG, JBG, HEIC, HEIF, CALS
+- **Documents:** PDF, XPS, OXPS, HTML, HTM, TXT, TEXT, JAVA, CSV, XML, EPUB, PRN, PS, RTF, OST, PST, P7M, EML, MSG, EMLX, ICS, ZPL, BAT, CMD, JS, VBS, PS1, PS1M
+- **CAD & Vector:** DWG, DXF, DFT, SLDDRW, PLT, HPGL, HP, HPG, KDW, CDW, SPW
+
+## All File Formats
+
+- **Images:** TIFF, JPG, JPEG, JFIF, GIF, BMP, PNG, TGA, DCM, RAW, PSD, CDR, PCX, DCX, EMF, WMF, SVG, SVGZ, WEBP, JBIG, JBG, HEIC, HEIF, CALS, and more
+- **Office Documents:** PDF, DOC, DOCX, DOT, DOTX, XPS, OXPS, HTML, HTM, TXT, TEXT, JAVA, XLS, XLSX, XLSM, CSV, PPT, PPTX, PPSX, PUB, RTF, ODT, ODS, ODP, ODG, ODF, ONE, MHT, MHTML, VSD, VSDX, VSDM, WPC, SNP, XML, EPUB, and more
+- **CAD Drawings:** DWG, DXF, DFT, SLDDRW, EPRT, EPRTX, EASM, EASMX, EDRW, EDRWX, SLDPRT, SLDASM, PRTDOT, ASMDOT, DRWDOT, 3DXML, STL, PLT, HPGL, HP, HPG, HPGL, KDW, CDW, SPW, IDW, IPT, IAM, IPN, MCDX, MCTX, and more
+- **Email Files:** EML, MSG, OST, PST, P7M, EMLX
+- **Adobe Formats:** PDF, INDD, INDP, IDAP, INDT, INDL, INX, IDML, QXD, QXT, INDB, PSD, SWF
+- **Other:** ICS (iCalendar), ZPL (Zebra), PRN, PS, DWF, DWFX, DGN, CGM, CDR, CGM, BAT, CMD, JavaScript, VBS, PS1, PS1M, and more
+
+> **Note:** Some formats require additional software (e.g., Microsoft Office, Adobe InDesign, AutoCAD, KOMPAS-3D, CorelDraw, etc.) to be installed on the system. For a full, up-to-date list and software requirements, see the [2Printer Supported Formats page](https://www.cmd2printer.com/overview/supported-formats).
+
+**Common Supported Extensions:**
+
+`.pdf, .doc, .docx, .dot, .dotx, .xls, .xlsx, .xlsm, .csv, .ppt, .pptx, .ppsx, .pub, .rtf, .odt, .ods, .odp, .odg, .one, .mht, .mhtml, .vsd, .vsdx, .vsdm, .wpc, .snp, .xml, .epub, .tif, .tiff, .jpg, .jpeg, .jfif, .gif, .bmp, .png, .tga, .dcm, .raw, .psd, .cdr, .pcx, .dcx, .emf, .wmf, .svg, .svgz, .webp, .jbig, .jbg, .heic, .heif, .dwg, .dxf, .dft, .slddrw, .eprt, .eprtx, .easm, .easmx, .edrw, .edrwx, .sldprt, .sldasm, .prtdot, .asmdot, .drwdot, .3dxml, .stl, .plt, .hp, .hpg, .hpgl, .kdw, .cdw, .spw, .idw, .ipt, .iam, .ipn, .mcdx, .mctx, .eml, .msg, .ost, .pst, .p7m, .emlx, .indd, .indp, .idap, .indt, .indl, .inx, .idml, .qxd, .qxt, .indb, .ps, .prn, .ics, .zpl, .bat, .cmd, .js, .vbs, .ps1, .ps1m`
+
+For the latest and complete list, always refer to the [2Printer Supported Formats page](https://www.cmd2printer.com/overview/supported-formats).
+
+---
+
 ## License
 MIT License
