@@ -73,7 +73,7 @@ namespace ToPrinterWrapper
                     }
                 }
             }
-            
+
             PrintPath = printPath;
             MaxConcurrentPrintingJobs = maxConcurrentPrintingJobs;
             _concurrentPrintingSemaphore = new SemaphoreSlim(MaxConcurrentPrintingJobs);
@@ -200,6 +200,16 @@ namespace ToPrinterWrapper
             }
         }
 
+        private async Task<int> PrintDocumentInternalAsync(string fileName, string printerName, PrintOptions printOptions, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
+        {
+            string args = $"-options alerts:no silent:{(Silent ? "yes" : "no")} log:no -props spjob:yes {printOptions.BuildArguments()}";
+            var delete = printOptions.DeleteFile;
+            printOptions.DeleteFile = null;
+            var exitCode =  await PrintDocumentAsync(fileName, printerName, args, timeout, cancellationToken);
+            if(delete == true) DeleteFile(fileName);
+            return exitCode;
+        }
+
         /// <summary>
         /// Prints a document from a file using the specified printer and options.
         /// </summary>
@@ -211,10 +221,21 @@ namespace ToPrinterWrapper
         /// <returns>The exit code from 2Printer.</returns>
         public async Task<int> PrintDocumentAsync(string fileName, string printerName, PrintOptions printOptions, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
-            string args = $"-options alerts:no silent:{(Silent ? "yes" : "no")} log:no -props spjob:yes {printOptions.BuildArguments()}";
+            string tempFile = Path.Combine(PrintPath, $"{Guid.NewGuid().ToString()}.tmp");
             var delete = printOptions.DeleteFile;
             printOptions.DeleteFile = null;
-            var exitCode =  await PrintDocumentAsync(fileName, printerName, args, timeout, cancellationToken);
+            
+            await using (var fileStream = File.OpenRead(fileName))
+            {
+                await using (var tempStream = File.OpenWrite(tempFile))
+                {
+                    fileStream.Seek(0, SeekOrigin.Begin);
+                    await fileStream.CopyToAsync(tempStream, 81920, cancellationToken);
+                }
+            }
+
+            var exitCode =  await PrintDocumentInternalAsync(tempFile, printerName, printOptions, timeout, cancellationToken);
+            DeleteFile(tempFile);
             if(delete == true) DeleteFile(fileName);
             return exitCode;
         }
@@ -239,7 +260,7 @@ namespace ToPrinterWrapper
                 await stream.CopyToAsync(fileStream, 81920, cancellationToken);
             }
 
-            var exitCode = await PrintDocumentAsync(tempFile, printerName, printOptions, timeout, cancellationToken);
+            var exitCode = await PrintDocumentInternalAsync(tempFile, printerName, printOptions, timeout, cancellationToken);
             DeleteFile(tempFile);
             return exitCode;
         }
