@@ -168,6 +168,45 @@ This helps prevent system overload and ensures print jobs do not start when the 
 
 ---
 
+## Memory Pressure Timeout
+
+ToPrinterWrapper provides a configurable **Memory Pressure Timeout** feature to prevent print jobs from waiting indefinitely when the system is under heavy memory load.
+
+- **What it does:**
+  - When system memory usage exceeds the configured threshold (see `MaxSystemMemoryUsageRatio`), new print jobs will wait for memory pressure to be relieved **up to a maximum timeout**.
+  - If memory pressure is not relieved within the timeout, the print job fails with a specific error code (`ErrorCode.MemoryPressureTimeout`).
+
+- **How to configure:**
+    - `MemoryPressureTimeoutMs` (default: `60000` ms = 60 seconds)
+        - The maximum time (in milliseconds) a print job will wait for system memory usage to drop below the threshold before giving up.
+    - `MaxSystemMemoryUsageRatio` (default: `0.9`)
+        - The maximum allowed ratio of used system memory (e.g., `0.9` = 90%).
+    - `MemoryPressurePollIntervalMs` (default: `1000`)
+        - How often (in milliseconds) to check for memory pressure relief while waiting.
+
+- **Effect on Print Jobs:**
+    - If the system is under memory pressure for longer than the timeout, the print job will fail fast instead of hanging indefinitely.
+    - The error code can be checked programmatically to distinguish this case from other failures.
+
+**Example:**
+```csharp
+var printer = new ToPrinter {
+    MaxSystemMemoryUsageRatio = 0.85,
+    MemoryPressurePollIntervalMs = 2000,
+    MemoryPressureTimeoutMs = 30000 // Wait up to 30 seconds
+};
+// If system memory usage is above 85%, new print jobs will wait and poll every 2 seconds, up to 30 seconds total.
+```
+
+**Best Practices:**
+- Tune `MemoryPressureTimeoutMs` to balance between responsiveness and reliability for your workload.
+- Handle the `MemoryPressureTimeout` error code in your application to provide user feedback or retry logic as needed.
+
+**Error Code:**
+- `ErrorCode.MemoryPressureTimeout` (see `ToPrinterWrapper.ErrorCodes.cs`)
+
+---
+
 ## Concurrency Testing
 - The library can be tested for concurrency by launching multiple print jobs in parallel and verifying the maximum concurrency does not exceed the configured limit.
 
