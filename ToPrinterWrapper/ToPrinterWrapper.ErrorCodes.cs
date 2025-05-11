@@ -12,6 +12,8 @@ namespace ToPrinterWrapper
         public const int PrinterNotFound = 1000;
         [Description("Printer Offline")]
         public const int PrinterOffline = 1001;
+        [Description("Memory Pressure Timeout")]
+        public const int MemoryPressureTimeout = 2000;
         [Description("All actions failed")]        
         public const int AllActionsFailed = 1094796908;
         [Description("Access denied")]

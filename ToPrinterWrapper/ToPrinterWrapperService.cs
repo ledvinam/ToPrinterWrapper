@@ -29,7 +29,8 @@ namespace ToPrinterWrapper
                 ThrowExceptions = options.Value.ThrowExceptions,
                 MemoryPressureEnabled = options.Value.MemoryPressureEnabled,
                 MaxSystemMemoryUsageRatio = options.Value.MaxSystemMemoryUsageRatio,
-                MemoryPressurePollIntervalMs = options.Value.MemoryPressurePollIntervalMs
+                MemoryPressurePollIntervalMs = options.Value.MemoryPressurePollIntervalMs,
+                MemoryPressureTimeoutMs = options.Value.MemoryPressureTimeoutMs
             };
         }
 
@@ -96,5 +97,9 @@ namespace ToPrinterWrapper
         /// Gets or sets the maximum memory usage ratio for the ToPrinter instance.
         /// </summary>
         public int MemoryPressurePollIntervalMs { get; set; } = 1000;
+        /// <summary>
+        /// Gets or sets the timeout for memory pressure handling in milliseconds.
+        /// </summary>
+        public int MemoryPressureTimeoutMs { get; set; } = -1;
     }
 }
